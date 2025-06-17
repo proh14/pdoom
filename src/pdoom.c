@@ -15,15 +15,23 @@ game_t state = {
 
 // clang-format off
 int map[8][8] = {
-    {1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 2, 2, 3, 3, 4, 4},
+    {1, 0, 0, 0, 0, 0, 0, 4},
+    {1, 0, 1, 0, 2, 0, 0, 4},
+    {1, 0, 0, 0, 0, 0, 0, 4},
+    {1, 0, 3, 0, 4, 0, 0, 4},
+    {1, 0, 0, 0, 0, 0, 0, 4},
+    {1, 0, 0, 0, 0, 0, 0, 4},
+    {1, 1, 2, 2, 3, 3, 4, 4},
 };
 // clang-format on
+uint32_t wall_colors[] = {
+    0x000000FF, // 0: unused
+    0xFF0000FF, // 1: red
+    0x00FF00FF, // 2: green
+    0x0000FFFF, // 3: blue
+    0xFFFF00FF, // 4: yellow
+};
 
 static int init_game(void) {
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
@@ -62,84 +70,7 @@ static void vertical_line(int x, int y1, int y2, uint32_t color) {
     state.pixels[y * WINDOW_WIDTH + x] = color;
   }
 }
-
-static void render(void) {
-  for (int x = 0; x < WINDOW_WIDTH; x++) {
-    // Calculate ray position and direction
-    const float cameraX = (2.0f * (x / (float)(WINDOW_WIDTH))) - 1.0f;
-    const vec2f_t dir = {
-        .x = state.dir.x + state.plane.x * cameraX,
-        .y = state.dir.y + state.plane.y * cameraX,
-    };
-
-    // Raycasting algorithm
-    vec2f_t pos = state.pos;
-    vec2i_t ipos = {
-        .x = (int)pos.x,
-        .y = (int)pos.y,
-    };
-
-    const vec2f_t deltaDist = {
-        .x = fabsf(dir.x) < 1e-20 ? 1e30 : fabsf(1.0f / dir.x),
-        .y = fabsf(dir.y) < 1e-20 ? 1e30 : fabsf(1.0f / dir.y),
-    };
-
-    vec2f_t sideDist = {
-        .x = (dir.x < 0) ? (pos.x - ipos.x) * deltaDist.x
-                         : (ipos.x + 1.0f - pos.x) * deltaDist.x,
-        .y = (dir.y < 0) ? (pos.y - ipos.y) * deltaDist.y
-                         : (ipos.y + 1.0f - pos.y) * deltaDist.y,
-    };
-
-    vec2i_t step = {
-        .x = (int)sign(dir.x),
-        .y = (int)sign(dir.y),
-    };
-
-    int hit = 0;
-    int side = 0;
-    while (!hit) {
-      if (sideDist.x < sideDist.y) {
-        sideDist.x += deltaDist.x;
-        ipos.x += step.x;
-        side = 0; // x-axis
-      } else {
-        sideDist.y += deltaDist.y;
-        ipos.y += step.y;
-        side = 1; // y-axis
-      }
-
-      hit = map[ipos.x][ipos.y]; // Hit a wall
-    }
-    uint32_t color = 0xFF0000FF; // Default color (red)
-
-    if (side == 1) {
-      const uint32_t br = ((color & 0xFF0FF) * 0xC0) >> 8;
-      const uint32_t g = ((color & 0x00FF00) * 0xC0) >> 8;
-
-      color = 0xFF000000 | (br & 0xFF00FF) | (g & 0x00FF00);
-    }
-
-    double perpDist = 0;
-    if (side == 0) {
-      perpDist = (sideDist.x - deltaDist.x);
-    } else {
-      perpDist = (sideDist.y - deltaDist.y);
-    }
-
-    const int height = (int)(WINDOW_HEIGHT / perpDist);
-    const int drawStart = max(0, (WINDOW_HEIGHT / 2) - (height / 2));
-    const int drawEnd =
-        min(WINDOW_HEIGHT - 1, (WINDOW_HEIGHT / 2) + (height / 2));
-
-    assert(ipos.x >= 0 && ipos.x < 8 && ipos.y >= 0 && ipos.y < 8);
-
-    // vertical_line(x, 0, drawStart, 0xFF202020);               // Sky color
-    vertical_line(x, drawStart, drawEnd, color); // Wall color
-    // vertical_line(x, drawEnd, WINDOW_HEIGHT - 1, 0xFF000000); // Floor color
-  }
-}
-
+static void render(void) {}
 static void rotate(float angle) {
   const vec2f_t olddir = state.dir;
   const vec2f_t oldplane = state.plane;
@@ -152,6 +83,8 @@ static void rotate(float angle) {
 static void gameloop(void) {
   float rotspeed = 3.0f * 0.01f;  // Rotation speed
   float movespeed = 3.0f * 0.01f; // Movement speed
+
+  float new_x, new_y;
 
   while (!state.exit) {
     SDL_Event event;
@@ -167,12 +100,20 @@ static void gameloop(void) {
           state.exit = true;
           break;
         case SDL_SCANCODE_W:
-          state.pos.x += state.dir.x * movespeed;
-          state.pos.y += state.dir.y * movespeed;
+          new_x = state.pos.x + state.dir.x * movespeed;
+          new_y = state.pos.y + state.dir.y * movespeed;
+          if (map[(int)new_x][(int)state.pos.y] == 0)
+            state.pos.x = new_x;
+          if (map[(int)state.pos.x][(int)new_y] == 0)
+            state.pos.y = new_y;
           break;
         case SDL_SCANCODE_S:
-          state.pos.x -= state.dir.x * movespeed;
-          state.pos.y -= state.dir.y * movespeed;
+          new_x = state.pos.x - state.dir.x * movespeed;
+          new_y = state.pos.y - state.dir.y * movespeed;
+          if (map[(int)new_x][(int)state.pos.y] == 0)
+            state.pos.x = new_x;
+          if (map[(int)state.pos.x][(int)new_y] == 0)
+            state.pos.y = new_y;
           break;
         case SDL_SCANCODE_A: {
           rotate(rotspeed);
@@ -188,7 +129,6 @@ static void gameloop(void) {
         break;
       }
     }
-    memset(state.pixels, 0, WINDOW_WIDTH * WINDOW_HEIGHT * sizeof(uint32_t));
     render();
     SDL_UpdateTexture(state.texture, NULL, state.pixels,
                       WINDOW_WIDTH * sizeof(uint32_t));
@@ -203,9 +143,11 @@ int main(void) {
     return EXIT_FAILURE;
   }
 
-  state.pos = (vec2f_t){.x = 2, .y = 2};
-  state.dir = normalize(((vec2f_t){-1.0f, 0.1f}));
-  state.plane = (vec2f_t){.x = 0.0f, .y = 0.66f}; // Camera plane
+  state.pos =
+      (vec2f_t){.x = 3.5f, .y = 3.5f};      // Start near the center of the map
+  state.dir = normalize(((vec2f_t){1, 0})); // Looking right (positive X)
+  state.plane =
+      (vec2f_t){.x = 0.0f, .y = 0.66f}; // Standard camera plane for FOV
 
   gameloop();
   cleanup_game();
