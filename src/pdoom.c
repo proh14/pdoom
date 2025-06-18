@@ -1,7 +1,6 @@
 #include "pdoom.h"
 #include "utils.h"
 #include <assert.h>
-#include <bits/stdint-uintn.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
