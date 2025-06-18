@@ -80,7 +80,7 @@ static void render(void) {
     vec2i_t mappos = {(int)state.pos.x, (int)state.pos.y};
 
     vec2f_t deltadist = {(raydir.x == 0) ? 1e30 : fabs(1 / raydir.x),
-                         (raydir.x == 0) ? 1e30 : fabs(1 / raydir.y)};
+                         (raydir.y == 0) ? 1e30 : fabs(1 / raydir.y)};
 
     double perpd = 0;
 
@@ -124,27 +124,10 @@ static void render(void) {
     else
       perpd = (sidedist.y - deltadist.y);
 
-    uint32_t color;
-    switch (hit) {
-    case 1:
-      color = 0xFF0000;
-      break;
-    case 2:
-      color = 0x00FF00;
-      break;
-    case 3:
-      color = 0x0000FF;
-      break;
-    case 4:
-      color = 0xFFFFFF;
-      break;
-    default:
-      color = 0xFFFF00;
-      break;
-    }
+    uint32_t color = wall_colors[hit];
 
     if (side == 1) {
-      // color = ((color & 0xFEFEFE) >> 1);
+      color = ((color & 0xFEFEFE) >> 1);
     }
 
     int lineheight = (int)(WINDOW_HEIGHT / perpd);
