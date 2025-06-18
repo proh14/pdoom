@@ -77,10 +77,10 @@ static void render(void) {
     vec2f_t raydir = {state.dir.x + state.plane.x * camx,
                       state.dir.y + state.plane.y * camx};
 
-    vec2i_t mappos = {(int)state.dir.x, (int)state.dir.y};
+    vec2i_t mappos = {(int)state.pos.x, (int)state.pos.y};
 
     vec2f_t deltadist = {(raydir.x == 0) ? 1e30 : fabs(1 / raydir.x),
-                         (raydir.x == 0) ? 1e30 : fabs(1 / raydir.x)};
+                         (raydir.x == 0) ? 1e30 : fabs(1 / raydir.y)};
 
     double perpd = 0;
 
@@ -93,7 +93,7 @@ static void render(void) {
 
     if (raydir.x < 0) {
       step.x = -1;
-      sidedist.x = (state.dir.x - mappos.x) * deltadist.x;
+      sidedist.x = (state.pos.x - mappos.x) * deltadist.x;
     } else {
       step.x = 1;
       sidedist.x = (mappos.x + 1 - state.pos.x) * deltadist.x;
@@ -101,7 +101,7 @@ static void render(void) {
 
     if (raydir.y < 0) {
       step.y = -1;
-      sidedist.y = (state.dir.y - mappos.y) * deltadist.y;
+      sidedist.y = (state.pos.y - mappos.y) * deltadist.y;
     } else {
       step.y = 1;
       sidedist.y = (mappos.y + 1 - state.pos.y) * deltadist.y;
@@ -124,17 +124,8 @@ static void render(void) {
     else
       perpd = (sidedist.y - deltadist.y);
 
-    int lineheight = (int)(WINDOW_HEIGHT / perpd);
-
-    int start = -lineheight / 2 + WINDOW_HEIGHT / 2;
-    if (start < 0)
-      start = 0;
-    int end = lineheight / 2 + WINDOW_HEIGHT / 2;
-    if (end >= WINDOW_HEIGHT)
-      end = WINDOW_HEIGHT - 1;
-
     uint32_t color;
-    switch (map[mappos.x][mappos.y]) {
+    switch (hit) {
     case 1:
       color = 0xFF0000;
       break;
@@ -153,8 +144,17 @@ static void render(void) {
     }
 
     if (side == 1) {
-      color = color / 2;
+      // color = ((color & 0xFEFEFE) >> 1);
     }
+
+    int lineheight = (int)(WINDOW_HEIGHT / perpd);
+
+    int start = -lineheight / 2 + WINDOW_HEIGHT / 2;
+    if (start < 0)
+      start = 0;
+    int end = lineheight / 2 + WINDOW_HEIGHT / 2;
+    if (end >= WINDOW_HEIGHT)
+      end = WINDOW_HEIGHT - 1;
 
     vertical_line(x, start, end, color);
   }
