@@ -1,6 +1,7 @@
 #include "pdoom.h"
 #include "utils.h"
 #include <assert.h>
+#include <bits/stdint-uintn.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -70,7 +71,94 @@ static void vertical_line(int x, int y1, int y2, uint32_t color) {
     state.pixels[y * WINDOW_WIDTH + x] = color;
   }
 }
-static void render(void) {}
+static void render(void) {
+  for (int x = 0; x < WINDOW_WIDTH; x++) {
+    double camx = 2 * x / ((double)WINDOW_WIDTH) - 1;
+    vec2f_t raydir = {state.dir.x + state.plane.x * camx,
+                      state.dir.y + state.plane.y * camx};
+
+    vec2i_t mappos = {(int)state.dir.x, (int)state.dir.y};
+
+    vec2f_t deltadist = {(raydir.x == 0) ? 1e30 : fabs(1 / raydir.x),
+                         (raydir.x == 0) ? 1e30 : fabs(1 / raydir.x)};
+
+    double perpd = 0;
+
+    vec2f_t sidedist = {0, 0};
+
+    vec2i_t step = {0, 0};
+
+    int hit = 0;
+    int side = 0;
+
+    if (raydir.x < 0) {
+      step.x = -1;
+      sidedist.x = (state.dir.x - mappos.x) * deltadist.x;
+    } else {
+      step.x = 1;
+      sidedist.x = (mappos.x + 1 - state.pos.x) * deltadist.x;
+    }
+
+    if (raydir.y < 0) {
+      step.y = -1;
+      sidedist.y = (state.dir.y - mappos.y) * deltadist.y;
+    } else {
+      step.y = 1;
+      sidedist.y = (mappos.y + 1 - state.pos.y) * deltadist.y;
+    }
+
+    while (hit == 0) {
+      if (sidedist.x < sidedist.y) {
+        sidedist.x += deltadist.x;
+        mappos.x += step.x;
+        side = 0;
+      } else {
+        sidedist.y += deltadist.y;
+        mappos.y += step.y;
+        side = 1;
+      }
+      hit = map[mappos.x][mappos.y];
+    }
+    if (side == 0)
+      perpd = (sidedist.x - deltadist.x);
+    else
+      perpd = (sidedist.y - deltadist.y);
+
+    int lineheight = (int)(WINDOW_HEIGHT / perpd);
+
+    int start = -lineheight / 2 + WINDOW_HEIGHT / 2;
+    if (start < 0)
+      start = 0;
+    int end = lineheight / 2 + WINDOW_HEIGHT / 2;
+    if (end >= WINDOW_HEIGHT)
+      end = WINDOW_HEIGHT - 1;
+
+    uint32_t color;
+    switch (map[mappos.x][mappos.y]) {
+    case 1:
+      color = 0xFF0000;
+      break;
+    case 2:
+      color = 0x00FF00;
+      break;
+    case 3:
+      color = 0x0000FF;
+      break;
+    case 4:
+      color = 0xFFFFFF;
+      break;
+    default:
+      color = 0xFFFF00;
+      break;
+    }
+
+    if (side == 1) {
+      color = color / 2;
+    }
+
+    vertical_line(x, start, end, color);
+  }
+}
 static void rotate(float angle) {
   const vec2f_t olddir = state.dir;
   const vec2f_t oldplane = state.plane;
