@@ -20,7 +20,7 @@ void player_move_forward(player_t *player, float delta_time) {
   player->pos.y += player->dir.y * player->move_speed * delta_time;
 }
 
-void player_rotate_left(player_t *player, float delta_time) {
+void player_rotate_right(player_t *player, float delta_time) {
   float old_dir_x = player->dir.x;
   player->dir.x = player->dir.x * cosf(player->rot_speed * delta_time) -
                   player->dir.y * sinf(player->rot_speed * delta_time);
@@ -34,7 +34,7 @@ void player_rotate_left(player_t *player, float delta_time) {
                     player->plane.y * cosf(player->rot_speed * delta_time);
 }
 
-void player_rotate_right(player_t *player, float delta_time) {
+void player_rotate_left(player_t *player, float delta_time) {
   float old_dir_x = player->dir.x;
   player->dir.x = player->dir.x * cosf(-player->rot_speed * delta_time) -
                   player->dir.y * sinf(-player->rot_speed * delta_time);

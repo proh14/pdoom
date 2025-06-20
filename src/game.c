@@ -1,6 +1,7 @@
 #include "game.h"
 #include "input.h"
 #include "render.h"
+#include "texture.h"
 #include "utils.h"
 #include "vec.h"
 #include <SDL3/SDL.h>
@@ -49,6 +50,7 @@ int game_init(game_t *game, const char *title, int width, int height,
 
   game->exit = false;
 
+  texture_load_all();
   return 0;
 }
 
@@ -88,6 +90,7 @@ void game_update(game_t *game) {
 }
 
 void game_cleanup(game_t *game) {
+  texture_free();
   free(game->pixels);
   SDL_DestroyTexture(game->texture);
   SDL_DestroyRenderer(game->renderer);
