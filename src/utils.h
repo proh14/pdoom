@@ -1,26 +1,12 @@
 #pragma once
-#ifndef UTILS_H_
-#define UTILS_H_
+#ifndef UTILS_H
+#define UTILS_H
 
-// Utility macros for vector operations
+#include <stdio.h>
+#include <stdlib.h>
 
-#define dot(v0, v1) ((v0).x * (v1).x + (v0).y * (v1).y)
-#define length(v) (sqrtf(dot(v, v)))
-#define normalize(v)                                                           \
-  ({                                                                           \
-    float len = length(v);                                                     \
-    (vec2f_t){(v).x / len, (v).y / len};                                       \
-  })
-#define sign(v) ((v) < 0 ? -1 : (v) > 0 ? 1 : 0)
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#define max(a, b) ((a) > (b) ? (a) : (b))
+void die(const char *message);
+void *xmalloc(size_t size);
+void *xrealloc(void *ptr, size_t size);
 
-// Vector types
-typedef struct {
-  float x, y;
-} vec2f_t;
-typedef struct {
-  int x, y;
-} vec2i_t;
-
-#endif // UTILS_H_
+#endif // UTILS_H

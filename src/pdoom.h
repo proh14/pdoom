@@ -1,26 +1,13 @@
 #pragma once
-#ifndef PDOOM_H_
-#define PDOOM_H_
+#ifndef PDOOM_H
+#define PDOOM_H
 
-#define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 480
+#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1080
 
-#include "utils.h"
-#include <SDL3/SDL.h>
-#include <stdbool.h>
-#include <stdint.h>
+#define RENDER_WIDTH 640
+#define RENDER_HEIGHT 480
 
-typedef struct game {
-  SDL_Window *window;
-  SDL_Renderer *renderer;
-  SDL_Texture *texture;
-  uint32_t pixels[WINDOW_WIDTH * WINDOW_HEIGHT];
+#define SCREEN_TITLE "pdoom :)"
 
-  vec2f_t pos, dir, plane;
-
-  bool exit;
-} game_t;
-
-extern game_t game;
-
-#endif // PDOOM_H_
+#endif // PDOOM_H
